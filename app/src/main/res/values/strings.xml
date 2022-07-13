@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">JetpackMVVM</string>
+    <string name="get_result_from_network">Get result from network</string>
 </resources>
