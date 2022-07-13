@@ -1,10 +1,7 @@
 package com.xiaozhezhe.coroutine
 
 import android.util.Log
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 
 class Coroutine {
     companion object {
@@ -14,6 +11,8 @@ class Coroutine {
     init {
         whichThread()
         testRunBlocking()
+        fetchTwoData()
+        fetchTwoDataWaitAll()
     }
 
     private fun whichThread() {
@@ -52,5 +51,51 @@ class Coroutine {
             }
         }
         Log.d(TAG, "end")
+    }
+
+    private suspend fun fetchData(data: Long): Long {
+        var result = 0L
+        runBlocking {
+            launch {
+                delay(data)
+                result = data
+            }
+        }
+        return result
+    }
+
+    private fun fetchTwoData() {
+        GlobalScope.launch {
+            coroutineScope {
+                // 实现类似RxJava zip操作
+                Log.d(TAG, "fetchTwoData start")
+                val deferredOne = async { fetchData(100) }
+                val deferredTwo = async { fetchData(200) }
+                Log.d(TAG, "fetchTwoData fetchData start")
+                val result1 = deferredOne.await()
+                Log.d(TAG, "fetchTwoData fetchData end 1")
+                val result2 = deferredTwo.await()
+                Log.d(TAG, "fetchTwoData fetchData end 2")
+                Log.d(TAG, "fetchTwoData result is " + (result1 + result2))
+            }
+        }
+    }
+
+    private fun fetchTwoDataWaitAll() {
+        GlobalScope.launch {
+            coroutineScope {
+                Log.d(TAG, "fetchTwoDataWaitAll start")
+                var result = 0L
+                // fetch two data at the same time
+                val deferredList =
+                    listOf(async { fetchData(100) }, async { fetchData(200) })
+                // use awaitAll to wait for both fetch operation finish
+                val resultList = deferredList.awaitAll()
+                resultList.forEach {
+                    result += it
+                }
+                Log.d(TAG, "fetchTwoDataWaitAll result is $result")
+            }
+        }
     }
 }
