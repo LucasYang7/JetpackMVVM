@@ -3,6 +3,7 @@ package com.xiaozhezhe.jetpackmvvm
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.ViewModelProvider
 import com.xiaozhezhe.jetpackmvvm.databinding.ActivityMainBinding
 import com.xiaozhezhe.jetpackmvvm.viewmodel.MainViewModel
 
@@ -16,8 +17,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel = MainViewModel()
+        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+        // 必须指定lifecycleOwner，否则xml中的<data>节点内的LiveData不会刷新UI
+        binding.lifecycleOwner = this
         binding.vm = viewModel
         initView()
         subscribeData()
@@ -30,8 +33,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun subscribeData() {
-        viewModel.reponse.observe(this) {
-            binding.tvResult.text = it
-        }
+//        viewModel.reponse.observe(this) {
+//            binding.tvResult.text = it
+//        }
     }
 }

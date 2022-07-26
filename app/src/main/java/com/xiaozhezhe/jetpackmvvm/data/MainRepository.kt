@@ -1,27 +1,41 @@
 package com.xiaozhezhe.jetpackmvvm.data
 
+import android.os.Handler
+import android.os.Looper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.*
-import java.io.IOException
+import okhttp3.OkHttpClient
+import okhttp3.Request
 
 class MainRepository {
+    companion object {
+        const val REQUEST_SUCCESS = "request success"
+        const val REQUEST_FAILED = "request failed"
+    }
+
     suspend fun fetchData(url: String, callback: (String) -> Unit) = withContext(Dispatchers.IO) {
-        val request = Request.Builder()
-            .url(url)
-            .build()
-        val client = OkHttpClient()
-            .newBuilder()
-            .build()
-        client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                callback(e.toString())
+        try {
+            val request = Request.Builder()
+                .url(url)
+                .build()
+            val client = OkHttpClient()
+                .newBuilder()
+                .build()
+            client.newCall(request).execute().run {
+                val responseString = if (isSuccessful) {
+                    body?.string() ?: REQUEST_SUCCESS
+                } else {
+                    REQUEST_FAILED
+                }
+                Handler(Looper.getMainLooper()).post {
+                    callback.invoke(responseString)
+                }
             }
-
-            override fun onResponse(call: Call, response: Response) {
-                callback(response.body?.byteString().toString())
+        } catch (e: Exception) {
+            Handler(Looper.getMainLooper()).post {
+                callback.invoke(e.toString())
             }
-
-        })
+            e.printStackTrace()
+        }
     }
 }
